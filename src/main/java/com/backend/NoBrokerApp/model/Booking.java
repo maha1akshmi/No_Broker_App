@@ -41,6 +41,12 @@ public class Booking {
     @Column(columnDefinition = "TEXT")
     private String message;
 
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -54,6 +60,6 @@ public class Booking {
     }
 
     public enum BookingStatus {
-        PENDING, CONFIRMED, CANCELLED
+        PENDING, CONFIRMED, REJECTED, CANCELLED
     }
 }

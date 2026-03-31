@@ -139,6 +139,13 @@ public class AdminController {
             map.put("preferredDate", b.getPreferredDate());
             map.put("message", b.getMessage());
             map.put("createdAt", b.getCreatedAt());
+
+            // Enrich with names for admin dashboard
+            com.backend.NoBrokerApp.model.Property prop = propertyRepository.findById(b.getPropertyId()).orElse(null);
+            com.backend.NoBrokerApp.model.User user = userRepository.findById(b.getUserId()).orElse(null);
+            map.put("propertyTitle", prop != null ? prop.getTitle() : null);
+            map.put("userName", user != null ? user.getName() : null);
+
             return map;
         }).collect(Collectors.toList());
 
@@ -171,8 +178,8 @@ public class AdminController {
      */
     @PatchMapping("/bookings/{id}/confirm")
     public ResponseEntity<ApiResponse<?>> confirmBooking(@PathVariable Long id) {
-        bookingService.confirmBooking(id);
-        return ResponseEntity.ok(ApiResponse.success("Booking confirmed", null));
+        bookingService.confirmBookingAdmin(id);
+        return ResponseEntity.ok(ApiResponse.success("Booking confirmed. Confirmation email sent.", null));
     }
 
     /**

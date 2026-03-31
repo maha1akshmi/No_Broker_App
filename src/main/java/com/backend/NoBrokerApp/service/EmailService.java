@@ -58,4 +58,55 @@ public class EmailService {
             log.error("Failed to send rejection email to {}: {}", toEmail, e.getMessage());
         }
     }
+
+    /**
+     * Sends a booking confirmation email to the user who booked the visit.
+     */
+    public void sendBookingConfirmationEmail(String toEmail, String userName, String propertyTitle, String ownerName) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Your booking has been confirmed! — NoBroker");
+        message.setText(
+                "Hi " + userName + ",\n\n"
+                + "Great news! Your booking for the property \"" + propertyTitle
+                + "\" has been confirmed by the property owner (" + ownerName + ").\n\n"
+                + "Please be on time for your scheduled visit. You can view booking details in your NoBroker dashboard.\n\n"
+                + "Best regards,\n"
+                + "Team NoBroker"
+        );
+
+        try {
+            mailSender.send(message);
+            log.info("Booking confirmation email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send booking confirmation email to {}: {}", toEmail, e.getMessage());
+        }
+    }
+
+    /**
+     * Sends a booking rejection email to the user who booked the visit.
+     */
+    public void sendBookingRejectionEmail(String toEmail, String userName, String propertyTitle, String reason) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(toEmail);
+        message.setSubject("Update on your booking — NoBroker");
+        message.setText(
+                "Hi " + userName + ",\n\n"
+                + "Unfortunately, your booking for the property \"" + propertyTitle
+                + "\" was not accepted by the property owner.\n\n"
+                + (reason != null && !reason.isBlank()
+                    ? "Reason: " + reason + "\n\n"
+                    : "")
+                + "You can browse other properties and schedule a new visit from your NoBroker dashboard.\n\n"
+                + "Best regards,\n"
+                + "Team NoBroker"
+        );
+
+        try {
+            mailSender.send(message);
+            log.info("Booking rejection email sent to {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send booking rejection email to {}: {}", toEmail, e.getMessage());
+        }
+    }
 }

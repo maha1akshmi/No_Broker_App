@@ -54,6 +54,44 @@ public class BookingController {
     }
 
     /**
+     * GET /api/bookings/owner — Get bookings on properties owned by current user
+     */
+    @GetMapping("/owner")
+    public ResponseEntity<ApiResponse<?>> getOwnerBookings(Authentication authentication) {
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        List<BookingResponse> bookings = bookingService.getBookingsForOwner(user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Owner bookings retrieved", bookings));
+    }
+
+    /**
+     * PATCH /api/bookings/{id}/confirm — Property owner confirms a pending booking
+     */
+    @PatchMapping("/{id}/confirm")
+    public ResponseEntity<ApiResponse<?>> confirmBooking(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        bookingService.confirmBooking(id, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Booking confirmed. Confirmation email sent to the user.", null));
+    }
+
+    /**
+     * PATCH /api/bookings/{id}/reject — Property owner rejects a pending booking
+     */
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<ApiResponse<?>> rejectBooking(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body,
+            Authentication authentication) {
+
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        String reason = (body != null) ? body.get("reason") : "No reason provided";
+        bookingService.rejectBooking(id, user.getId(), reason);
+        return ResponseEntity.ok(ApiResponse.success("Booking rejected. The user has been notified.", null));
+    }
+
+    /**
      * PUT /api/bookings/{id}/cancel — Cancel a booking (USER auth required)
      */
     @PutMapping("/{id}/cancel")
