@@ -120,6 +120,13 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<!-- Cloudinary — image upload -->
+		<dependency>
+			<groupId>com.cloudinary</groupId>
+			<artifactId>cloudinary-http44</artifactId>
+			<version>1.36.0</version>
+		</dependency>
+
 		<!-- Google API Client — verify Google ID tokens server-side -->
 		<dependency>
 			<groupId>com.google.api-client</groupId>
