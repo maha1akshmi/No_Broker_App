@@ -40,7 +40,7 @@ public class PropertyController {
             @RequestParam BigDecimal price,
             @RequestParam String location,
             @RequestParam String city,
-            @RequestParam String state,
+            @RequestParam(required = false, defaultValue = "") String state,
             @RequestParam(required = false) String pincode,
             @RequestParam(required = false) Integer bedrooms,
             @RequestParam(required = false) Integer bathrooms,

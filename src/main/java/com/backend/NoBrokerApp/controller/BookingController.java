@@ -52,4 +52,17 @@ public class BookingController {
         List<BookingResponse> bookings = bookingService.getMyBookings(user.getId());
         return ResponseEntity.ok(ApiResponse.success("Bookings retrieved", bookings));
     }
+
+    /**
+     * PUT /api/bookings/{id}/cancel — Cancel a booking (USER auth required)
+     */
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<ApiResponse<?>> cancelBooking(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        bookingService.cancelBooking(id, user.getId());
+        return ResponseEntity.ok(ApiResponse.success("Booking cancelled", null));
+    }
 }

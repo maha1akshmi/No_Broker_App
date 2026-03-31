@@ -7,8 +7,10 @@ import com.backend.NoBrokerApp.model.Property;
 import com.backend.NoBrokerApp.model.Property.PropertyStatus;
 import com.backend.NoBrokerApp.model.Property.PropertyType;
 import com.backend.NoBrokerApp.model.PropertyImage;
+import com.backend.NoBrokerApp.model.User;
 import com.backend.NoBrokerApp.repository.PropertyImageRepository;
 import com.backend.NoBrokerApp.repository.PropertyRepository;
+import com.backend.NoBrokerApp.repository.UserRepository;
 import com.backend.NoBrokerApp.upload.CloudinaryService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -30,13 +32,16 @@ public class PropertyService {
     private final PropertyRepository propertyRepository;
     private final PropertyImageRepository propertyImageRepository;
     private final CloudinaryService cloudinaryService;
+    private final UserRepository userRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
                            PropertyImageRepository propertyImageRepository,
-                           CloudinaryService cloudinaryService) {
+                           CloudinaryService cloudinaryService,
+                           UserRepository userRepository) {
         this.propertyRepository = propertyRepository;
         this.propertyImageRepository = propertyImageRepository;
         this.cloudinaryService = cloudinaryService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -128,6 +133,19 @@ public class PropertyService {
                 .map(PropertyImage::getImageUrl)
                 .collect(Collectors.toList());
 
+        // Lookup owner info
+        PropertyResponse.OwnerInfo ownerInfo = null;
+        if (property.getOwnerId() != null) {
+            User owner = userRepository.findById(property.getOwnerId()).orElse(null);
+            if (owner != null) {
+                ownerInfo = PropertyResponse.OwnerInfo.builder()
+                        .name(owner.getName())
+                        .email(owner.getEmail())
+                        .phone(owner.getPhone())
+                        .build();
+            }
+        }
+
         return PropertyResponse.builder()
                 .id(property.getId())
                 .title(property.getTitle())
@@ -145,6 +163,7 @@ public class PropertyService {
                 .status(property.getStatus().name())
                 .rejectionReason(property.getRejectionReason())
                 .images(imageUrls)
+                .owner(ownerInfo)
                 .createdAt(property.getCreatedAt())
                 .build();
     }
