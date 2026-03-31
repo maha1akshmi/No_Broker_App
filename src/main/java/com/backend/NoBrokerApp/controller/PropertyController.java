@@ -7,13 +7,13 @@ import com.backend.NoBrokerApp.exception.ApiResponse;
 import com.backend.NoBrokerApp.model.Property;
 import com.backend.NoBrokerApp.security.UserPrincipal;
 import com.backend.NoBrokerApp.service.PropertyService;
-import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +30,38 @@ public class PropertyController {
 
     /**
      * POST /api/properties — Create a new property listing (USER auth required)
-     * Accepts multipart/form-data with property fields + image files
+     * Accepts multipart/form-data with individual fields + image files
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<?>> createProperty(
-            @Valid @ModelAttribute PropertyRequest request,
-            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam String type,
+            @RequestParam BigDecimal price,
+            @RequestParam String location,
+            @RequestParam String city,
+            @RequestParam String state,
+            @RequestParam(required = false) String pincode,
+            @RequestParam(required = false) Integer bedrooms,
+            @RequestParam(required = false) Integer bathrooms,
+            @RequestParam(required = false) BigDecimal areaSqft,
+            @RequestParam(required = false, defaultValue = "false") Boolean isFurnished,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
             Authentication authentication) {
+
+        PropertyRequest request = new PropertyRequest();
+        request.setTitle(title);
+        request.setDescription(description);
+        request.setType(type);
+        request.setPrice(price);
+        request.setLocation(location);
+        request.setCity(city);
+        request.setState(state);
+        request.setPincode(pincode);
+        request.setBedrooms(bedrooms);
+        request.setBathrooms(bathrooms);
+        request.setAreaSqft(areaSqft);
+        request.setIsFurnished(isFurnished);
 
         UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
         Property property = propertyService.createProperty(request, images, user.getId());
