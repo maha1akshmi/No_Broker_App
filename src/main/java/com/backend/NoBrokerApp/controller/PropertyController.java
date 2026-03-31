@@ -1,0 +1,78 @@
+package com.backend.NoBrokerApp.controller;
+
+import com.backend.NoBrokerApp.dto.PropertyFilterRequest;
+import com.backend.NoBrokerApp.dto.PropertyRequest;
+import com.backend.NoBrokerApp.dto.PropertyResponse;
+import com.backend.NoBrokerApp.exception.ApiResponse;
+import com.backend.NoBrokerApp.model.Property;
+import com.backend.NoBrokerApp.service.PropertyService;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/properties")
+public class PropertyController {
+
+    private final PropertyService propertyService;
+
+    public PropertyController(PropertyService propertyService) {
+        this.propertyService = propertyService;
+    }
+
+    /**
+     * POST /api/properties — Create a new property listing (USER auth required)
+     * Accepts multipart/form-data with property fields + image files
+     */
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<?>> createProperty(
+            @Valid @ModelAttribute PropertyRequest request,
+            @RequestParam(value = "images", required = false) List<MultipartFile> images,
+            Authentication authentication) {
+
+        Long userId = Long.valueOf(authentication.getCredentials().toString());
+        Property property = propertyService.createProperty(request, images, userId);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", property.getId());
+        data.put("status", property.getStatus().name());
+
+        return ResponseEntity.ok(ApiResponse.success("Property submitted for approval", data));
+    }
+
+    /**
+     * GET /api/properties — Public endpoint, returns APPROVED properties with filters
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<?>> getApprovedProperties(
+            @ModelAttribute PropertyFilterRequest filter) {
+        Map<String, Object> result = propertyService.getApprovedProperties(filter);
+        return ResponseEntity.ok(ApiResponse.success("Properties retrieved", result));
+    }
+
+    /**
+     * GET /api/properties/{id} — Public endpoint, single property details
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> getPropertyById(@PathVariable Long id) {
+        PropertyResponse response = propertyService.getPropertyById(id);
+        return ResponseEntity.ok(ApiResponse.success("Property retrieved", response));
+    }
+
+    /**
+     * GET /api/properties/my — Authenticated user's own listings (all statuses)
+     */
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<?>> getMyProperties(Authentication authentication) {
+        Long userId = Long.valueOf(authentication.getCredentials().toString());
+        List<PropertyResponse> properties = propertyService.getMyProperties(userId);
+        return ResponseEntity.ok(ApiResponse.success("My properties retrieved", properties));
+    }
+}
