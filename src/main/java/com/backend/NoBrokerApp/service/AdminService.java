@@ -3,7 +3,9 @@ package com.backend.NoBrokerApp.service;
 import com.backend.NoBrokerApp.dto.PropertyResponse;
 import com.backend.NoBrokerApp.model.Property;
 import com.backend.NoBrokerApp.model.Property.PropertyStatus;
+import com.backend.NoBrokerApp.model.User;
 import com.backend.NoBrokerApp.repository.PropertyRepository;
+import com.backend.NoBrokerApp.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,15 +18,17 @@ public class AdminService {
 
     private final PropertyRepository propertyRepository;
     private final PropertyService propertyService;
-
-    // EmailService from Maha's module — injected via Spring DI
-    // Will be autowired once Maha's email package is available
-    // private final EmailService emailService;
+    private final EmailService emailService;
+    private final UserRepository userRepository;
 
     public AdminService(PropertyRepository propertyRepository,
-                        PropertyService propertyService) {
+                        PropertyService propertyService,
+                        EmailService emailService,
+                        UserRepository userRepository) {
         this.propertyRepository = propertyRepository;
         this.propertyService = propertyService;
+        this.emailService = emailService;
+        this.userRepository = userRepository;
     }
 
     public List<PropertyResponse> getPendingProperties() {
@@ -45,8 +49,11 @@ public class AdminService {
         property.setStatus(PropertyStatus.APPROVED);
         propertyRepository.save(property);
 
-        // TODO: Uncomment after Maha's EmailService is integrated
-        // emailService.sendApprovalEmail(ownerEmail, property.getTitle());
+        // Send approval email to property owner
+        User owner = userRepository.findById(property.getOwnerId()).orElse(null);
+        if (owner != null) {
+            emailService.sendApprovalEmail(owner.getEmail(), property.getTitle());
+        }
     }
 
     @Transactional
@@ -62,7 +69,10 @@ public class AdminService {
         property.setRejectionReason(reason);
         propertyRepository.save(property);
 
-        // TODO: Uncomment after Maha's EmailService is integrated
-        // emailService.sendRejectionEmail(ownerEmail, property.getTitle(), reason);
+        // Send rejection email to property owner
+        User owner = userRepository.findById(property.getOwnerId()).orElse(null);
+        if (owner != null) {
+            emailService.sendRejectionEmail(owner.getEmail(), property.getTitle(), reason);
+        }
     }
 }

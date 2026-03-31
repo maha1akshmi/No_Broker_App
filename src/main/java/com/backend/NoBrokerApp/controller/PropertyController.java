@@ -5,6 +5,7 @@ import com.backend.NoBrokerApp.dto.PropertyRequest;
 import com.backend.NoBrokerApp.dto.PropertyResponse;
 import com.backend.NoBrokerApp.exception.ApiResponse;
 import com.backend.NoBrokerApp.model.Property;
+import com.backend.NoBrokerApp.security.UserPrincipal;
 import com.backend.NoBrokerApp.service.PropertyService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
@@ -37,8 +38,8 @@ public class PropertyController {
             @RequestParam(value = "images", required = false) List<MultipartFile> images,
             Authentication authentication) {
 
-        Long userId = Long.valueOf(authentication.getCredentials().toString());
-        Property property = propertyService.createProperty(request, images, userId);
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        Property property = propertyService.createProperty(request, images, user.getId());
 
         Map<String, Object> data = new HashMap<>();
         data.put("id", property.getId());
@@ -71,8 +72,8 @@ public class PropertyController {
      */
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<?>> getMyProperties(Authentication authentication) {
-        Long userId = Long.valueOf(authentication.getCredentials().toString());
-        List<PropertyResponse> properties = propertyService.getMyProperties(userId);
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        List<PropertyResponse> properties = propertyService.getMyProperties(user.getId());
         return ResponseEntity.ok(ApiResponse.success("My properties retrieved", properties));
     }
 }

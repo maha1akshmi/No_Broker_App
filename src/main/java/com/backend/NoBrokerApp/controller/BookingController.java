@@ -4,6 +4,7 @@ import com.backend.NoBrokerApp.dto.BookingRequest;
 import com.backend.NoBrokerApp.dto.BookingResponse;
 import com.backend.NoBrokerApp.exception.ApiResponse;
 import com.backend.NoBrokerApp.model.Booking;
+import com.backend.NoBrokerApp.security.UserPrincipal;
 import com.backend.NoBrokerApp.service.BookingService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -32,8 +33,8 @@ public class BookingController {
             @Valid @RequestBody BookingRequest request,
             Authentication authentication) {
 
-        Long userId = Long.valueOf(authentication.getCredentials().toString());
-        Booking booking = bookingService.createBooking(request, userId);
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        Booking booking = bookingService.createBooking(request, user.getId());
 
         Map<String, Object> data = new HashMap<>();
         data.put("id", booking.getId());
@@ -47,8 +48,8 @@ public class BookingController {
      */
     @GetMapping("/my")
     public ResponseEntity<ApiResponse<?>> getMyBookings(Authentication authentication) {
-        Long userId = Long.valueOf(authentication.getCredentials().toString());
-        List<BookingResponse> bookings = bookingService.getMyBookings(userId);
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        List<BookingResponse> bookings = bookingService.getMyBookings(user.getId());
         return ResponseEntity.ok(ApiResponse.success("Bookings retrieved", bookings));
     }
 }
