@@ -169,6 +169,7 @@ public class PropertyService {
 
     public List<PropertyResponse> getMyProperties(Long ownerId) {
         return propertyRepository.findByOwnerId(ownerId).stream()
+                .filter(p -> p.getStatus() != PropertyStatus.DELETED)
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
