@@ -101,4 +101,23 @@ public class PropertyController {
         List<PropertyResponse> properties = propertyService.getMyProperties(user.getId());
         return ResponseEntity.ok(ApiResponse.success("My properties retrieved", properties));
     }
+
+    /**
+     * DELETE /api/properties/{id} — Soft-delete a property (owner only)
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<?>> deleteProperty(@PathVariable Long id,
+                                                          Authentication authentication) {
+        UserPrincipal user = (UserPrincipal) authentication.getPrincipal();
+        boolean hadActiveBookings = propertyService.deleteProperty(id, user.getId());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("hadActiveBookings", hadActiveBookings);
+
+        String message = hadActiveBookings
+                ? "Property deleted. Users with active bookings have been notified."
+                : "Property deleted successfully";
+
+        return ResponseEntity.ok(ApiResponse.success(message, data));
+    }
 }

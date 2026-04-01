@@ -94,6 +94,6 @@ public class Property {
     }
 
     public enum PropertyStatus {
-        PENDING, APPROVED, REJECTED
+        PENDING, APPROVED, REJECTED, DELETED
     }
 }
