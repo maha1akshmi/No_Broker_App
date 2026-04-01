@@ -62,6 +62,7 @@ public class Property {
     private Boolean isFurnished;
 
     @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "VARCHAR(20)")
     @Builder.Default
     private PropertyStatus status = PropertyStatus.PENDING;
 
