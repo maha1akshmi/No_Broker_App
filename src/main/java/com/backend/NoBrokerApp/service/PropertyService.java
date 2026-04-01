@@ -3,11 +3,14 @@ package com.backend.NoBrokerApp.service;
 import com.backend.NoBrokerApp.dto.PropertyFilterRequest;
 import com.backend.NoBrokerApp.dto.PropertyRequest;
 import com.backend.NoBrokerApp.dto.PropertyResponse;
+import com.backend.NoBrokerApp.model.Booking;
+import com.backend.NoBrokerApp.model.Booking.BookingStatus;
 import com.backend.NoBrokerApp.model.Property;
 import com.backend.NoBrokerApp.model.Property.PropertyStatus;
 import com.backend.NoBrokerApp.model.Property.PropertyType;
 import com.backend.NoBrokerApp.model.PropertyImage;
 import com.backend.NoBrokerApp.model.User;
+import com.backend.NoBrokerApp.repository.BookingRepository;
 import com.backend.NoBrokerApp.repository.PropertyImageRepository;
 import com.backend.NoBrokerApp.repository.PropertyRepository;
 import com.backend.NoBrokerApp.repository.UserRepository;
@@ -33,15 +36,18 @@ public class PropertyService {
     private final PropertyImageRepository propertyImageRepository;
     private final CloudinaryService cloudinaryService;
     private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
 
     public PropertyService(PropertyRepository propertyRepository,
                            PropertyImageRepository propertyImageRepository,
                            CloudinaryService cloudinaryService,
-                           UserRepository userRepository) {
+                           UserRepository userRepository,
+                           BookingRepository bookingRepository) {
         this.propertyRepository = propertyRepository;
         this.propertyImageRepository = propertyImageRepository;
         this.cloudinaryService = cloudinaryService;
         this.userRepository = userRepository;
+        this.bookingRepository = bookingRepository;
     }
 
     @Transactional
@@ -120,6 +126,45 @@ public class PropertyService {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Property not found with id: " + id));
         return toResponse(property);
+    }
+
+    /**
+     * Soft-delete a property. Only the property owner can delete.
+     * Sets status to DELETED. Cancels PENDING bookings with a message.
+     * Returns true if property had active (CONFIRMED) bookings.
+     */
+    @Transactional
+    public boolean deleteProperty(Long propertyId, Long ownerId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new EntityNotFoundException("Property not found with id: " + propertyId));
+
+        if (!property.getOwnerId().equals(ownerId)) {
+            throw new IllegalArgumentException("You can only delete your own properties");
+        }
+
+        if (property.getStatus() == PropertyStatus.DELETED) {
+            throw new IllegalArgumentException("Property is already deleted");
+        }
+
+        // Check for active bookings
+        List<Booking> bookings = bookingRepository.findByPropertyId(propertyId);
+        boolean hasActiveBookings = bookings.stream()
+                .anyMatch(b -> b.getStatus() == BookingStatus.CONFIRMED || b.getStatus() == BookingStatus.PENDING);
+
+        // Cancel all PENDING bookings
+        for (Booking booking : bookings) {
+            if (booking.getStatus() == BookingStatus.PENDING) {
+                booking.setStatus(BookingStatus.CANCELLED);
+                booking.setRejectionReason("Property has been deleted by the owner");
+                bookingRepository.save(booking);
+            }
+        }
+
+        // Soft-delete the property
+        property.setStatus(PropertyStatus.DELETED);
+        propertyRepository.save(property);
+
+        return hasActiveBookings;
     }
 
     public List<PropertyResponse> getMyProperties(Long ownerId) {
